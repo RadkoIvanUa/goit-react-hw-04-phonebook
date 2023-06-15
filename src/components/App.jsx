@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -8,73 +8,53 @@ import Filter from './filter/Filter';
 
 import { Container } from './StyledContainer';
 
-export class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
+const localStorageContactsArr = JSON.parse(localStorage.getItem('contacts'));
+
+export function App() {
+  const [contacts, setContacts] = useState(localStorageContactsArr ?? []);
+  const [filter, setFilter] = useState('');
+
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
+
+  const heandleFilter = evt => {
+    setFilter(evt.currentTarget.value);
   };
 
-  componentDidMount() {
-    const localStorageContactsArr = JSON.parse(
-      localStorage.getItem('contacts')
+  const getFilteredArr = () => {
+    return contacts.filter(contact =>
+      contact.name.toLowerCase().includes(filter.toLowerCase())
     );
-    if (!localStorageContactsArr) {
-      return;
-    }
-    this.setState({ contacts: localStorageContactsArr });
-  }
-
-  componentDidUpdate(_, prevState) {
-    if (prevState.contacts.length !== this.state.contacts.length) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  }
-
-  heandleFilter = evt => {
-    this.setState({ filter: evt.currentTarget.value });
   };
 
-  getFilteredArr() {
-    const filter = this.state.filter.toLowerCase();
-
-    return this.state.contacts.filter(contact =>
-      contact.name.toLowerCase().includes(filter)
-    );
-  }
-
-  setStateContacts = userData => {
+  const setStateContacts = contactData => {
     if (
-      this.state.contacts.some(
-        contact => contact.name.toLowerCase() === userData.name.toLowerCase()
+      contacts.some(
+        contact => contact.name.toLowerCase() === contactData.name.toLowerCase()
       )
     ) {
-      toast.info(`${userData.name} is already in contacts`);
+      toast.info(`${contactData.name} is already in contacts`);
       return;
     }
-    this.setState(prevState => ({
-      contacts: [...prevState.contacts, userData],
-    }));
+    setContacts(prevConatacts => [...prevConatacts, contactData]);
   };
 
-  deleteContact = contactId => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== contactId),
-    }));
+  const deleteContact = contactId => {
+    setContacts(contacts.filter(contact => contact.id !== contactId));
   };
 
-  render() {
-    return (
-      <Container>
-        <h2 style={{ textAlign: 'center' }}>Phonebook</h2>
-        <ContactForm createContactsArr={this.setStateContacts} />
-        <h2 style={{ textAlign: 'center' }}>Contacts</h2>
-        <Filter onFilter={this.heandleFilter} filter={this.state.filter} />
-        <ContactList
-          FilteredArr={this.getFilteredArr()}
-          onDeleteContact={this.deleteContact}
-        />
-        <ToastContainer autoClose={3000} />
-      </Container>
-    );
-  }
+  return (
+    <Container>
+      <h2 style={{ textAlign: 'center' }}>Phonebook</h2>
+      <ContactForm createContactsArr={setStateContacts} />
+      <h2 style={{ textAlign: 'center' }}>Contacts</h2>
+      <Filter onFilter={heandleFilter} filter={filter} />
+      <ContactList
+        FilteredArr={getFilteredArr()}
+        onDeleteContact={deleteContact}
+      />
+      <ToastContainer autoClose={3000} />
+    </Container>
+  );
 }
