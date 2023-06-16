@@ -41,7 +41,9 @@ export function App() {
   };
 
   const deleteContact = contactId => {
-    setContacts(contacts.filter(contact => contact.id !== contactId));
+    setContacts(prevConatacts =>
+      prevConatacts.filter(prevContact => prevContact.id !== contactId)
+    );
   };
 
   return (
